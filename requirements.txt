@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+tritonclient[all]
+numpy
+opencv-python
+onnxruntime
+Pillow
+tqdm
+shapely
+pyclipper
+pydantic-settings
