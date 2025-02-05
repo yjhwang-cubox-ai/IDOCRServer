@@ -7,16 +7,13 @@ import cv2
 import numpy as np
 import time
 import tritonclient.grpc as grpcclient
-from datetime import datetime
 from transformers import AutoTokenizer
-from processors.time_logger import LayoutTimeLogger
 
 class LayoutProcessor:
-    def __init__(self, args):
-        self.args = args
+    def __init__(self):
         self.tokenizer = AutoTokenizer.from_pretrained('tokenizer')
-        self.client = grpcclient.InferenceServerClient(url=self.args.triton_url)
-        self.model_name = self.args.layout_path
+        self.client = grpcclient.InferenceServerClient(url="0.0.0.0:8888")
+        self.model_name = "LAYOUT"
 
         # 레이블 맵 로드
         with open(os.path.join('tokenizer', 'label_map.json'), 'r', encoding='utf-8') as f:
@@ -24,14 +21,6 @@ class LayoutProcessor:
         
         self.index_to_label = {v: k for k, v in self.label_map.items()}
         self.y_threshold = 10
-        self.logger = self._initialize_logger()
-    
-    def _initialize_logger(self) -> LayoutTimeLogger:
-        """로거 초기화"""
-        log_dir = os.path.join(self.args.output_path, 'logs')
-        os.makedirs(log_dir, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return LayoutTimeLogger(log_dir, timestamp)
     
     def _convert_bbox_format(self, bboxes: list) -> np.ndarray:
         """
@@ -227,7 +216,5 @@ class LayoutProcessor:
             word_ids = encoding.word_ids(batch_index=i)
             sample_result = self.postprocess(logits[i], all_sorted_texts[i], word_ids)
             results.append(sample_result)
-        
-        self.logger.log_processing_time('layout_analysis', 'image' , time.time() - start_time)
-        
+            
         return results[0] if batch_size == 1 else results
